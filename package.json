@@ -9,13 +9,19 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
-    "vue": "^2.6.11"
+    "d3-bboxCollide": "^1.0.4",
+    "graphml-js": "^0.4.0",
+    "graphml-moddle": "^0.1.1",
+    "raw-loader": "^4.0.1",
+    "vue": "^2.6.11",
+    "xml-loader": "^1.2.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",
     "@vue/cli-plugin-eslint": "~4.4.0",
     "@vue/cli-service": "~4.4.0",
     "babel-eslint": "^10.1.0",
+    "d3": "^5.16.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
     "vue-template-compiler": "^2.6.11"
