@@ -18,19 +18,28 @@
         data() {
             return {
                 height: 900,
-                width: 1200,
-                maxLinkCount: Math.max(...data.nodes.map(d => this.getLinkCount(d.id)))
+                width: 1600,
+                maxLinkCount: Math.max(...data.nodes.map(d => this.getLinkCount(d.id))),
+                maxScaleFactor: 5000
             }
         },
-        computed:{
-
-        },
+        computed: {},
         methods: {
-            getLinkCount(nodeId){
-                return data.links.filter(link => {return link.source === nodeId || link.target === nodeId}).length
+            getLinkCount(nodeId) {
+                return data.links.filter(link => {
+                    return link.source === nodeId || link.target === nodeId
+                }).length
             },
-            getTextBBox(textElement, name){
-                return textElement.attr("font-size","1em").text(name).node().getBBox()
+            getTextBBox(textElement, node) {
+                const areaScaleFactor = this.maxScaleFactor * (this.getLinkCount(node.id) / this.maxLinkCount)
+                const baseBBox = textElement.attr("font-size", "1em").text(node.name).node().getBBox()
+                const baseArea = baseBBox.width * baseBBox.height
+                const linearScaleFactor = Math.sqrt(areaScaleFactor) / Math.sqrt(baseArea)
+                return {
+                    width: baseBBox.width * linearScaleFactor,
+                    height: baseBBox.height * linearScaleFactor,
+                    scaleFactor: linearScaleFactor
+                }
             },
             createChart() {
                 const svg = d3.select("#chartComponent")
@@ -40,19 +49,26 @@
                 const sampleBBox = svg.append("text")
 
                 const links = data.links.map(d => Object.create(d));
-                const nodes = data.nodes.map(d => Object.assign( {bbox: this.getTextBBox(sampleBBox, d.name)}, d));
+                const nodes = data.nodes.map(d => Object.assign({bbox: this.getTextBBox(sampleBBox, d)}, d));
 
                 const collide = bboxCollide(function (d) {
-                    return [[-d.bbox.width/2, -d.bbox.height/2],[d.bbox.width/2, d.bbox.height/2]]
+                    return [[-d.bbox.width / 2, -d.bbox.height / 2], [d.bbox.width / 2, d.bbox.height / 2]]
                 })
                     .strength(0.2)
-                    .iterations(2)
+                    .iterations(1)
 
                 const simulation = d3.forceSimulation(nodes)
-                        .force("link", d3.forceLink(links).distance(5))
-                        .force("charge", d3.forceManyBody().strength(-3))
-                        .force("collision", collide)
-                        .force("center", d3.forceCenter(this.width / 2, this.height / 2))
+                    .force("link", d3.forceLink(links).distance(10).iterations(1))
+                    .force("charge", d3.forceManyBody().strength(-5))
+                    .force("collision", collide)
+                    .force("center", d3.forceCenter(this.width / 2, this.height / 2))
+                    .force("box", () => {
+                        for (let i = 0, n = nodes.length; i < n; ++i) {
+                            let d = nodes[i];
+                            d.x = Math.max(d.bbox.width / 2, Math.min(this.width - d.bbox.width / 2, d.x))
+                            d.y = Math.max(d.bbox.height / 2, Math.min(this.height - d.bbox.height / 2, d.y));
+                        }}
+                    )
 
 
                 const link = svg.append("g")
@@ -67,8 +83,8 @@
                     .selectAll("g")
                     .data(nodes)
                     .join("g")
-                    .each(function(d) {
-                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black").attr("font-size", "1em").attr("text-anchor", "middle")
+                    .each(function (d) {
+                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black").attr("font-size", `${d.bbox.scaleFactor}em`).attr("text-anchor", "middle")
                         const bbox = text.node().getBBox()
                         d3.select(this).append("rect").attr("fill", "wheat").attr("width", bbox.width).attr("height", bbox.height).attr("x", bbox.x).attr("y", bbox.y)
                         text.raise()
@@ -84,12 +100,9 @@
                         .attr("y2", d => d.target.y);
 
                     node
-                        .attr("transform", (d) => `translate(${
-                            Math.max(d.bbox.width/2, Math.min(this.width - d.bbox.width/2, d.x))}, ${ //x
-                            Math.max(d.bbox.height/2, Math.min(this.height - d.bbox.height/2, d.y))})`) //y
+                        .attr("transform", (d) => `translate(${d.x},${d.y})`)
 
                 });
-
 
             }
 
