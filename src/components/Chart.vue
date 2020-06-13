@@ -37,7 +37,7 @@
         methods: {
             drag (simulation){
                 function dragstarted(d) {
-                    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                    if (!d3.event.active) simulation.alphaTarget(0.2).restart();
                     d.fx = d.x;
                     d.fy = d.y;
                 }
@@ -80,21 +80,16 @@
                     .attr("viewBox", [0, 0, this.width, this.height]);
 
                 const sampleBBox = svg.append("text")
-
                 const links = data.links.map(d => Object.create(d));
                 const nodes = data.nodes.map(d => Object.assign({bbox: this.getTextBBox(sampleBBox, d)}, d));
+                sampleBBox.remove()
 
-                const collide = bboxCollide(function (d) {
-                    return [[-d.bbox.width / 2, -d.bbox.height / 2], [d.bbox.width / 2, d.bbox.height / 2]]
-                })
+                const collide = bboxCollide((d) => [[-d.bbox.width / 2, -d.bbox.height / 2], [d.bbox.width / 2, d.bbox.height / 2]])
                     .strength(0.1)
                     .iterations(2)
 
                 const simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink(links).distance((d) =>   {
-                        const dist = 30 - (Math.log(d.weight)/Math.log(this.maxWeight))*40
-                        return dist
-                    }))
+                    .force("link", d3.forceLink(links).distance((d) =>   30 - (Math.log(d.weight)/Math.log(this.maxWeight))*40))
                     .force("charge", d3.forceManyBody().strength(-60).distanceMax(100))
                     .force("collision", collide)
                     .force("center", d3.forceCenter(this.width / 2, this.height / 2))
@@ -118,15 +113,21 @@
                     .data(nodes)
                     .join("g")
                     .each(function (d) {
-                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black")
+                        const text = d3.select(this).append("svg:text")
+                            .text(d.name)
+                            .attr("fill", "black")
                             .attr("font-size", `${d.bbox.scaleFactor}em`)
                             .attr("text-anchor", "middle")
                         const bbox = text.node().getBBox()
-                        d3.select(this).append("rect").attr("fill", "wheat").attr("width", bbox.width).attr("height", bbox.height).attr("x", bbox.x).attr("y", bbox.y)
+                        d3.select(this).append("rect")
+                            .attr("fill", "wheat")
+                            .attr("width", bbox.width)
+                            .attr("height", bbox.height)
+                            .attr("x", bbox.x)
+                            .attr("y", bbox.y)
                         text.raise()
                     })
                     .call(this.drag(simulation));
-                // .attr("fill", color)
 
                 simulation.on("tick", () => {
                     link
