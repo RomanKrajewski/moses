@@ -92,7 +92,7 @@
 
                 const simulation = d3.forceSimulation(nodes)
                     .force("link", d3.forceLink(links).distance((d) =>   {
-                        const dist = 20 - (Math.log(d.weight)/Math.log(this.maxWeight))*40
+                        const dist = 30 - (Math.log(d.weight)/Math.log(this.maxWeight))*40
                         return dist
                     }))
                     .force("charge", d3.forceManyBody().strength(-60).distanceMax(100))
