@@ -18,18 +18,29 @@
         data() {
             return {
                 height: 900,
-                width: 1200
+                width: 1200,
+                maxLinkCount: Math.max(...data.nodes.map(d => this.getLinkCount(d.id)))
             }
         },
+        computed:{
+
+        },
         methods: {
+            getLinkCount(nodeId){
+                return data.links.filter(link => {return link.source === nodeId || link.target === nodeId}).length
+            },
+            getTextBBox(textElement, name){
+                return textElement.attr("font-size","1em").text(name).node().getBBox()
+            },
             createChart() {
                 const svg = d3.select("#chartComponent")
                     .append("svg")
                     .attr("viewBox", [0, 0, this.width, this.height]);
-                const sampleBBox = svg.append("text").text("sample").node().getBBox()
+
+                const sampleBBox = svg.append("text")
 
                 const links = data.links.map(d => Object.create(d));
-                const nodes = data.nodes.map(d => Object.assign( {bbox: sampleBBox}, d));
+                const nodes = data.nodes.map(d => Object.assign( {bbox: this.getTextBBox(sampleBBox, d.name)}, d));
 
                 const collide = bboxCollide(function (d) {
                     return [[-d.bbox.width/2, -d.bbox.height/2],[d.bbox.width/2, d.bbox.height/2]]
@@ -57,7 +68,7 @@
                     .data(nodes)
                     .join("g")
                     .each(function(d) {
-                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black").attr("text-anchor", "middle")
+                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black").attr("font-size", "1em").attr("text-anchor", "middle")
                         const bbox = text.node().getBBox()
                         d3.select(this).append("rect").attr("fill", "wheat").attr("width", bbox.width).attr("height", bbox.height).attr("x", bbox.x).attr("y", bbox.y)
                         text.raise()
@@ -73,7 +84,9 @@
                         .attr("y2", d => d.target.y);
 
                     node
-                        .attr("transform", (d) => `translate(${Math.max(20, Math.min(this.width - 20, d.x))}, ${Math.max(20, Math.min(this.height - 20, d.y))})`)
+                        .attr("transform", (d) => `translate(${
+                            Math.max(d.bbox.width/2, Math.min(this.width - d.bbox.width/2, d.x))}, ${ //x
+                            Math.max(d.bbox.height/2, Math.min(this.height - d.bbox.height/2, d.y))})`) //y
 
                 });
 
@@ -83,6 +96,7 @@
         },
         mounted() {
             this.createChart();
+            console.log()
         }
     }
 </script>
