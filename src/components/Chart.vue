@@ -20,11 +20,44 @@
                 height: 900,
                 width: 1600,
                 maxLinkCount: Math.max(...data.nodes.map(d => this.getLinkCount(d.id))),
-                maxScaleFactor: 5000
+                maxWeight: Math.max(...data.links.map(d => d.weight)),
+                maxScaleFactor: 4000
             }
         },
-        computed: {},
+        computed: {
+            weightMedian: function(){
+                const weights = data.links.map((d)=> d.weight).sort()
+                return weights[Math.floor(weights.length/2)]
+            },
+            weightAverage: function(){
+                const arr = (data.links.map((d)=> d.weight))
+                return arr.reduce( ( p, c ) => p + c, 0 ) / arr.length;
+            }
+        },
         methods: {
+            drag (simulation){
+                function dragstarted(d) {
+                    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                }
+
+                function dragged(d) {
+                    d.fx = d3.event.x;
+                    d.fy = d3.event.y;
+                }
+
+                function dragended(d) {
+                    if (!d3.event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                }
+
+                return d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended);
+            },
             getLinkCount(nodeId) {
                 return data.links.filter(link => {
                     return link.source === nodeId || link.target === nodeId
@@ -54,12 +87,15 @@
                 const collide = bboxCollide(function (d) {
                     return [[-d.bbox.width / 2, -d.bbox.height / 2], [d.bbox.width / 2, d.bbox.height / 2]]
                 })
-                    .strength(0.2)
-                    .iterations(1)
+                    .strength(0.1)
+                    .iterations(2)
 
                 const simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink(links).distance(20).iterations(1))
-                    .force("charge", d3.forceManyBody().strength(-2))
+                    .force("link", d3.forceLink(links).distance((d) =>   {
+                        const dist = 20 - (Math.log(d.weight)/Math.log(this.maxWeight))*40
+                        return dist
+                    }))
+                    .force("charge", d3.forceManyBody().strength(-60).distanceMax(100))
                     .force("collision", collide)
                     .force("center", d3.forceCenter(this.width / 2, this.height / 2))
                     .force("box", () => nodes.forEach((d) => {
@@ -82,13 +118,15 @@
                     .data(nodes)
                     .join("g")
                     .each(function (d) {
-                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black").attr("font-size", `${d.bbox.scaleFactor}em`).attr("text-anchor", "middle")
+                        const text = d3.select(this).append("svg:text").text(d.name).attr("fill", "black")
+                            .attr("font-size", `${d.bbox.scaleFactor}em`)
+                            .attr("text-anchor", "middle")
                         const bbox = text.node().getBBox()
                         d3.select(this).append("rect").attr("fill", "wheat").attr("width", bbox.width).attr("height", bbox.height).attr("x", bbox.x).attr("y", bbox.y)
                         text.raise()
                     })
+                    .call(this.drag(simulation));
                 // .attr("fill", color)
-                // .call(drag(simulation));
 
                 simulation.on("tick", () => {
                     link
@@ -106,8 +144,9 @@
 
         },
         mounted() {
+            // console.log(this.weightMedian)
+            // console.log(this.weightAverage)
             this.createChart();
-            console.log()
         }
     }
 </script>
