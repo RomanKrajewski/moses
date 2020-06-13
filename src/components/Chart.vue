@@ -58,16 +58,14 @@
                     .iterations(1)
 
                 const simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink(links).distance(10).iterations(1))
-                    .force("charge", d3.forceManyBody().strength(-5))
+                    .force("link", d3.forceLink(links).distance(20).iterations(1))
+                    .force("charge", d3.forceManyBody().strength(-2))
                     .force("collision", collide)
                     .force("center", d3.forceCenter(this.width / 2, this.height / 2))
-                    .force("box", () => {
-                        for (let i = 0, n = nodes.length; i < n; ++i) {
-                            let d = nodes[i];
+                    .force("box", () => nodes.forEach((d) => {
                             d.x = Math.max(d.bbox.width / 2, Math.min(this.width - d.bbox.width / 2, d.x))
                             d.y = Math.max(d.bbox.height / 2, Math.min(this.height - d.bbox.height / 2, d.y));
-                        }}
+                        })
                     )
 
 
