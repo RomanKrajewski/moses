@@ -10,6 +10,7 @@
   "dependencies": {
     "core-js": "^3.6.5",
     "d3-bboxCollide": "^1.0.4",
+    "d3-force-reuse": "^1.0.1",
     "graphml-js": "^0.4.0",
     "graphml-moddle": "^0.1.1",
     "raw-loader": "^4.0.1",
