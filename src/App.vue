@@ -30,6 +30,13 @@
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    min-width:900px;
   }
+  html, body {
+    overflow: hidden;
+  }
+  body {
+    margin: 8px;
+    padding: 0px;
+  }
+
 </style>
