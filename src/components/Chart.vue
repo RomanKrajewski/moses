@@ -98,6 +98,7 @@
                                         .attr("y", bbox.y)
                                         .attr("shape-rendering", "optimizeSpeed")
                                     text.raise()
+                                    this.savedText = Object.assign({}, text.node())
                                 })
                                 .call(this.drag(this.simulation)),
                         update => update
@@ -158,10 +159,12 @@
 
                 const zoomGroup = svg.append("g")
                 // .attr("shape-rendering", "optimizeSpeed")
-
                 svg.call(d3.zoom()
                     .extent([[0, 0], [this.width, this.height]])
+                    .translateExtent([[0,0],[this.width, this.height]])
                     .scaleExtent([1, 3])
+                    .on("start", ()  => this.renderedNodes.each(function(){this.savedText = d3.select(this).select("text").remove()}))
+                    .on("end", ()  => this.renderedNodes.each(function(){this.appendChild(this.savedText.node())}))
                     .on("zoom", () => zoomGroup.attr("transform", d3.event.transform)));
 
                 const link = zoomGroup.append("g")
